@@ -1,28 +1,39 @@
 import { Scene } from 'phaser';
 
-export class MainMenu extends Scene
-{
-    constructor ()
-    {
+export class MainMenu extends Scene {
+    constructor() {
         super('MainMenu');
     }
 
-    create ()
-    {
-        this.add.image(512, 384, 'background');
+    create() {
+        // Fondo del menú principal
+        this.add.image(512, 384, 'main');
 
-        this.add.image(512, 300, 'logo');
+        // === Sprite decorativo animado (quieto) ===
+        // Crear animación solo si no existe ya
+        if (!this.anims.exists('walk')) {
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
 
-        this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
+        // Sprite del personaje en la esquina superior izquierda
+        const walkingSprite = this.add.sprite(110, 240, 'player');
+        walkingSprite.play('walk');
+
+        // Escala opcional si querés que se vea más grande o chico
+        walkingSprite.setScale(1.3);
+
+        // Iniciar juego con tecla o clic
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.start('Game');
+        });
 
         this.input.once('pointerdown', () => {
-
             this.scene.start('Game');
-
         });
     }
 }
