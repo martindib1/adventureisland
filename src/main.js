@@ -7,7 +7,7 @@ import { Game2 } from './scenes/Game2';
 
 const config = {
     type: Phaser.AUTO,
-    width:  320, //256x240
+    width:  320,
     height: 240,
     parent: 'game-container',
     backgroundColor: '#028af8',

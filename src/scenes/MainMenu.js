@@ -6,8 +6,8 @@ export class MainMenu extends Scene {
     }
 
     create() {
-        // Fondo del menú principal
-        this.add.image(128, 128, 'main');
+        // Fondo del menú principal en el centro
+        const bg = this.add.image(0, 0, 'main').setOrigin(0, 0);
 
         // === Sprite decorativo animado (quieto) ===
         // Crear animación solo si no existe ya
@@ -29,11 +29,11 @@ export class MainMenu extends Scene {
 
         // Iniciar juego con tecla o clic
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Game');
+            this.scene.start('Game2');
         });
 
         this.input.once('pointerdown', () => {
-            this.scene.start('Game2');
+            this.scene.start('Game');
         });
     }
 }

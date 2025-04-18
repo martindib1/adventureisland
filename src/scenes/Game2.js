@@ -12,11 +12,44 @@ export class Game2 extends Scene {
     // — 2) Plataforma para el jugador (no afecta a proyectiles, salvo colisión que destruye) —
     this.platforms = this.physics.add.staticGroup();
     this.platforms.create(2430, 414, 'plataforma').setScale(1);
+    
+    this.platforms2 = this.physics.add.staticGroup();
+    this.platforms2.create(6225, 158, 'psal').setScale(1);
+
+    this.platforms3 = this.physics.add.staticGroup();
+    this.platforms3.create(6776, 158, 'paz').setScale(1);
+    this.platforms3.create(7160, 158, 'paz').setScale(1);
+    this.platforms3.create(8216, 158, 'paz').setScale(1);
+
+    this.platforms4 = this.physics.add.staticGroup();
+    this.platforms4.create(7560, 158, 'pam').setScale(1);
+
+    this.platforms5 = this.physics.add.staticGroup();
+    this.platforms5.create(6960, 135, 'proj').setScale(1);
+    this.platforms5.create(7745, 168, 'proj').setScale(1);
+    this.platforms5.create(7840, 200, 'proj').setScale(1);
+    this.platforms5.create(8032, 120, 'proj').setScale(1);
 
     // — 2b) Rocas (obstáculo para proyectiles y jugador) —
     this.rocks = this.physics.add.staticGroup();
     this.rocks.create(600, 400, 'roca').setScale(1);
     this.rocks.create(1200, 400, 'roca').setScale(1);
+
+    // — 2c) Rampa hecha de bloques 12×12 —
+    const blockSize  = 12;   // tamaño de tu sprite
+    const rampSteps  = 85;   // cuántos peldaños
+    const stepRise   = 3;    // cuántos px sube cada bloque
+    const startX     = 4870;  // origen X de la rampa
+    const startY     = 420;  // origen Y (encima de la plataforma)
+
+    this.ramp = this.physics.add.staticGroup();
+    for (let i = 0; i < rampSteps; i++) {
+      const x = startX + i * blockSize;
+      const y = startY - i * stepRise;
+      this.ramp.create(x, y, 'pvio')
+        .setOrigin(0, 1)      // el bloque asienta con su base
+        .refreshBody();
+    }
 
     // — 3) Jugador + colisiones contra plataformas y rocas —
     this.player = this.physics.add.sprite(100, 350, 'player')
@@ -25,6 +58,12 @@ export class Game2 extends Scene {
       .setScale(1);
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.rocks);
+    this.physics.add.collider(this.player, this.ramp);
+    this.physics.add.collider(this.player, this.platforms2); 
+    this.physics.add.collider(this.player, this.platforms3);
+    this.physics.add.collider(this.player, this.platforms4);
+    this.physics.add.collider(this.player, this.platforms5);
+
 
     // — 4) Mundo & cámara —
     this.cameras.main.setBounds(0, 0, bg.width, bg.height);
@@ -77,7 +116,6 @@ export class Game2 extends Scene {
      // Se mueve 2 px/s a la derecha (puedes invertirlo o chocar con un muro para hacerlo ping‑pong)
         const slow = this.enemies.create(300, 350, 'enemyWalker').setScale(1);
         slow.body.setAllowGravity(false);
-        slow.body.setVelocityX(-1);
  
      // • Colisión jugador ↔ enemigos
      this.physics.add.collider(this.player, this.enemies, () => {
@@ -137,6 +175,11 @@ export class Game2 extends Scene {
 
       // **Desaparece al tocar plataformas**
       this.physics.add.collider(b, this.platforms, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms5, proj => proj.destroy());
+      this.physics.add.collider(b, this.ramp, proj => proj.destroy());
 
     } else {
       // Segundo ataque: destruye rocas y (luego) enemigos
@@ -154,6 +197,11 @@ export class Game2 extends Scene {
 
       // **Desaparece al tocar plataformas**
       this.physics.add.collider(b, this.platforms, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
+      this.physics.add.collider(b, this.platforms5, proj => proj.destroy());
+      this.physics.add.collider(b, this.ramp, proj => proj.destroy());
 
       // (Luego superponés lo mismo con this.enemies)
     }
@@ -167,7 +215,7 @@ export class Game2 extends Scene {
       if (this.player.body.blocked.down) this.player.play('walk', true);
     }
     else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(150).setFlipX(false);
+      this.player.setVelocityX(1500).setFlipX(false);
       if (this.player.body.blocked.down) this.player.play('walk', true);
     }
     else {
