@@ -14,15 +14,15 @@ export class Game2 extends Scene {
     this.platforms.create(2430, 414, 'plataforma').setScale(1);
     
     this.platforms2 = this.physics.add.staticGroup();
-    this.platforms2.create(6225, 158, 'psal').setScale(1);
+    this.platforms2.create(6225, 317, 'psal').setScale(1);
 
     this.platforms3 = this.physics.add.staticGroup();
-    this.platforms3.create(6776, 158, 'paz').setScale(1);
-    this.platforms3.create(7160, 158, 'paz').setScale(1);
-    this.platforms3.create(8216, 158, 'paz').setScale(1);
+    this.platforms3.create(6776, 317, 'paz').setScale(1);
+    this.platforms3.create(7160, 317, 'paz').setScale(1);
+    this.platforms3.create(8216, 317, 'paz').setScale(1);
 
     this.platforms4 = this.physics.add.staticGroup();
-    this.platforms4.create(7560, 158, 'pam').setScale(1);
+    this.platforms4.create(7560, 317, 'pam').setScale(1);
 
     this.platforms5 = this.physics.add.staticGroup();
     this.platforms5.create(6960, 135, 'proj').setScale(1);
@@ -30,10 +30,21 @@ export class Game2 extends Scene {
     this.platforms5.create(7840, 200, 'proj').setScale(1);
     this.platforms5.create(8032, 120, 'proj').setScale(1);
 
+    this.platforms6 = this.physics.add.staticGroup();
+    this.platforms6.create(7230, 230, 'pdeath').setScale(1);
+    
+
     // — 2b) Rocas (obstáculo para proyectiles y jugador) —
     this.rocks = this.physics.add.staticGroup();
-    this.rocks.create(600, 400, 'roca').setScale(1);
-    this.rocks.create(1200, 400, 'roca').setScale(1);
+    this.rocks.create(1376, 402, 'roca').setScale(1);
+    this.rocks.create(1601, 402, 'roca').setScale(1);
+    this.rocks.create(3695, 402, 'roca').setScale(1);
+    this.rocks.create(3984, 402, 'roca').setScale(1);
+    this.rocks.create(4383, 402, 'roca').setScale(1);
+    this.rocks.create(4448, 402, 'roca').setScale(1);
+    this.rocks.create(6832, 146, 'roca').setScale(1);
+    this.rocks.create(7072, 146, 'roca').setScale(1);
+    this.rocks.create(7104, 146, 'roca').setScale(1);
 
     // — 2c) Rampa hecha de bloques 12×12 —
     const blockSize  = 12;   // tamaño de tu sprite
@@ -63,6 +74,21 @@ export class Game2 extends Scene {
     this.physics.add.collider(this.player, this.platforms3);
     this.physics.add.collider(this.player, this.platforms4);
     this.physics.add.collider(this.player, this.platforms5);
+    this.physics.add.collider(this.player, this.platforms6);
+
+
+
+    // — 2d) Resortes (salto potenciado) —
+    this.springs = this.physics.add.staticGroup();
+    const spring = this.springs.create(7370, 148, 'spring').setScale(1).refreshBody();
+
+    this.physics.add.collider(this.player, spring, p => {
+      if (p.body.blocked.down) {
+        p.setVelocityY(-300);         // impulso hacia arriba
+        spring.setFrame(1);           // cambiar a frame comprimido
+        this.time.delayedCall(100, () => spring.setFrame(0)); // volver al frame original
+      }
+    });
 
 
     // — 4) Mundo & cámara —
@@ -99,23 +125,6 @@ export class Game2 extends Scene {
      // — Enemigos —
      this.enemies = this.physics.add.group();
  
-     // Flyer: avanza horizontal y oscila vertical
-    const flyer = this.enemies.create(1000, 300, 'enemyFlyer').setScale(1);
-
-    flyer.body.setAllowGravity(false);
-    flyer.body.setVelocityX(50);
-     this.tweens.add({
-       targets: flyer,
-       y: flyer.y - 30,
-       yoyo: true,
-       repeat: -1,
-       duration: 800
-     });
-
-     // — Nuevo enemigo “muy lento” —
-     // Se mueve 2 px/s a la derecha (puedes invertirlo o chocar con un muro para hacerlo ping‑pong)
-        const slow = this.enemies.create(300, 350, 'enemyWalker').setScale(1);
-        slow.body.setAllowGravity(false);
  
      // • Colisión jugador ↔ enemigos
      this.physics.add.collider(this.player, this.enemies, () => {
@@ -142,6 +151,171 @@ export class Game2 extends Scene {
       this.anims.create({ key: 'idle', frames:[{ key:'player',frame:0 }], frameRate:10 });
       this.anims.create({ key: 'jump', frames:[{ key:'player',frame:0 }], frameRate:10 });
     }
+
+    // — 11) Animaciones de enemigos —
+    // Caracol
+    this.anims.create({
+      key: 'snailIdle',
+      frames: this.anims.generateFrameNumbers('snail', { start: 0, end: 1 }),
+      frameRate: 2,
+      repeat: -1
+    });
+    // Cuervo
+    this.anims.create({
+      key: 'crowFly',
+      frames: this.anims.generateFrameNumbers('crow', { start: 0, end: 1 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    // Cobra
+    this.anims.create({
+      key: 'cobraIdle',
+      frames: this.anims.generateFrameNumbers('cobra', { start: 0, end: 1 }),
+      frameRate: 2,
+      repeat: -1
+    });
+    // Kello verde / marrón (cambian con damage)
+    this.anims.create({
+      key: 'kelloGreenIdle',
+      frames: this.anims.generateFrameNumbers('kelloGreen', { start: 0, end: 1 }),
+      frameRate: 4,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'kelloBrownIdle',
+      frames: this.anims.generateFrameNumbers('kelloBrown', { start: 0, end: 1 }),
+      frameRate: 4,
+      repeat: -1
+    });
+
+    // — 12) Crear grupo general de enemigos —
+    this.enemies = this.physics.add.group();
+
+    // Caracol
+    const createSnail = (x, y) => {
+      const snail = this.enemies.create(x, y, 'snail').setScale(1).play('snailIdle');
+      snail.body.setAllowGravity(false);
+      snail.setImmovable(true);
+      snail.setData('type', 'snail');
+    };
+
+    createSnail.call(this, 770, 397);
+    createSnail.call(this, 930, 397);
+    createSnail.call(this, 980, 397);
+    createSnail.call(this, 1705, 397);
+    createSnail.call(this, 1800, 397);
+    createSnail.call(this, 1850, 397);
+    createSnail.call(this, 1900, 397);
+
+    // Cuervo
+    const createCrow = (x, y) => {
+  const crow = this.enemies.create(x, y, 'crow').setScale(1).play('crowFly');
+  crow.body.setAllowGravity(false);
+  crow.setData('type', 'crow');
+
+  // Movimiento horizontal y vertical en bucle (x ±25, y ±15)
+  this.tweens.add({
+    targets: crow,
+    x: x - 80, // se mueve 25px a la izquierda desde su posición original
+    y: y - 40, // y también sube un poco
+    yoyo: true,
+    repeat: -1,
+    duration: 1000,
+    ease: 'Sine.easeInOut',
+  });
+};
+
+    createCrow.call(this, 2860, 400);
+    createCrow.call(this, 3023, 400);
+    createCrow.call(this, 3172, 400);
+
+    // ---- Cobra (dispara bolas) ----
+    this.cobras = this.physics.add.group();
+    const cobra = this.enemies.create(4828, 400, 'cobra').setScale(1).play('cobraIdle');
+    cobra.body.setAllowGravity(false);
+    cobra.setImmovable(true);
+    cobra.setData('type', 'cobra');
+    this.cobraFireballs = this.physics.add.group();
+
+    // fireball ↔ jugador
+    this.physics.add.overlap(this.cobraFireballs, this.player, () => this.playerDie());
+
+    // disparo periódico
+    this.time.addEvent({
+      delay: 3000,
+      loop: true,
+      callback: () => {
+        const fb = this.cobraFireballs.create(cobra.x - 20, cobra.y, 'cobraFireball');
+        fb.body.setAllowGravity(false);
+        fb.setVelocityX(-100);
+    
+        // Destruir la fireball a los 1500 ms
+        this.time.delayedCall(1500, () => {
+          if (fb.active) fb.destroy();
+        });
+      }
+    });
+
+    this.physics.add.overlap(this.attackProjectiles, this.cobraFireballs, (p, f) => {
+      p.destroy();
+      f.destroy();
+    });
+    this.physics.add.overlap(this.fireProjectiles, this.cobraFireballs, (p, f) => {
+      p.destroy();
+      f.destroy();
+    });
+
+    // ---- Kello (verde → marrón → muere) ----
+    this.kellos = this.physics.add.group();
+    const kello = this.enemies.create(1100, 380, 'kelloGreen')
+      .setScale(1)
+      .play('kelloGreenIdle')
+      .setData('health', 2)
+      .setData('type', 'kello');
+    kello.body.setAllowGravity(false);
+    kello.setImmovable(true);
+
+    // — 13) Colisiones y overlaps enemigo↔jugador, proyectil↔enemigo —
+    this.physics.add.collider(this.player, this.enemies, () => playerDie());
+
+    const killHandler = (proj, enemy) => {
+      proj.destroy();
+    
+      // Si es Kello, revisar vida antes de mostrar animación
+      if (enemy.getData('type') === 'kello') {
+        let hp = enemy.getData('health') - 1;
+        enemy.setData('health', hp);
+        if (hp === 1) {
+          enemy.setTexture('kelloBrown');
+          enemy.play('kelloBrownIdle');
+          enemy.body.setAllowGravity(false);  // que NO caiga
+          enemy.setImmovable(true);
+          return;  // Salimos antes de hacer la animación de muerte
+        }
+      }
+    
+      // animación de muerte (mini salto) con PNG
+      const deathKey = enemy.getData('type') + 'Death';
+      const fx = this.add.sprite(enemy.x, enemy.y, deathKey).setScale(1);
+      this.tweens.add({
+        targets: fx,
+        y: fx.y - 20,
+        duration: 200,
+        yoyo: true,
+        onComplete: () => fx.destroy()
+      });
+    
+      enemy.destroy();
+    };
+
+    this.physics.add.overlap(this.attackProjectiles, this.enemies, killHandler);
+    this.physics.add.overlap(this.fireProjectiles,   this.enemies, killHandler);
+
+    // si el personaje toca con la plataforma6 se reinicia la escena
+    this.physics.add.overlap(this.player, this.platforms6, () => {
+      this.scene.restart();
+    });
+
   }
 
   collectEgg(player, egg) {
@@ -178,7 +352,6 @@ export class Game2 extends Scene {
       this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
       this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
       this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms5, proj => proj.destroy());
       this.physics.add.collider(b, this.ramp, proj => proj.destroy());
 
     } else {
@@ -200,11 +373,13 @@ export class Game2 extends Scene {
       this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
       this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
       this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms5, proj => proj.destroy());
       this.physics.add.collider(b, this.ramp, proj => proj.destroy());
 
-      // (Luego superponés lo mismo con this.enemies)
     }
+  }
+  //cuando playerdie este activa quiero q te mande a gameover
+  playerDie() {
+    this.scene.start('GameOver'); 
   }
 
 
@@ -215,7 +390,7 @@ export class Game2 extends Scene {
       if (this.player.body.blocked.down) this.player.play('walk', true);
     }
     else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(1500).setFlipX(false);
+      this.player.setVelocityX(150).setFlipX(false);
       if (this.player.body.blocked.down) this.player.play('walk', true);
     }
     else {
