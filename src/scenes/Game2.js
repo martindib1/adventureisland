@@ -29,6 +29,7 @@ export class Game2 extends Scene {
     this.platforms5.create(7745, 168, 'proj').setScale(1);
     this.platforms5.create(7840, 200, 'proj').setScale(1);
     this.platforms5.create(8032, 120, 'proj').setScale(1);
+    this.platforms5.create(7935, 135, 'proj').setScale(1);
 
     this.platforms6 = this.physics.add.staticGroup();
     this.platforms6.create(7230, 230, 'pdeath').setScale(1);
