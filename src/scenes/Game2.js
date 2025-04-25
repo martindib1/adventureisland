@@ -5,404 +5,510 @@ export class Game2 extends Scene {
     super('Game2');
   }
 
+  init(data) {
+    // Inicializamos vidas, si vienen por restart
+    this.lives = data.lives != null ? data.lives : 3;
+  }
+
   create() {
     // — 1) Fondo —
     const bg = this.add.image(0, 0, 'mapita').setOrigin(0, 0);
 
-    // — 2) Plataforma para el jugador (no afecta a proyectiles, salvo colisión que destruye) —
-    this.platforms = this.physics.add.staticGroup();
-    this.platforms.create(2430, 414, 'plataforma').setScale(1);
+    this.lifeIcon = this.add
+    .image(35, 20, 'vida')      // posición en pantalla (pixels), ajusta a tu gusto
+    .setOrigin(0, 0)             // esquina superior izquierda
+    .setScrollFactor(0)          // queda fijo en pantalla
+
+
+    // — VIDAS —
+    this.livesText = this.add.text(
+      45, 17,
+      `${this.lives}`,
+      {
+        fontSize: '12px',
+        color: '#ff0000'
+      }
+    )
+      .setScrollFactor(0)
+      .setOrigin(0, 0);
     
+
+    // — 2) Plataformas fijas —
+    this.platforms  = this.physics.add.staticGroup();
+    this.platforms.create(2430, 414, 'plataforma');
     this.platforms2 = this.physics.add.staticGroup();
-    this.platforms2.create(6225, 317, 'psal').setScale(1);
-
+    this.platforms2.create(6225, 317, 'psal');
     this.platforms3 = this.physics.add.staticGroup();
-    this.platforms3.create(6776, 317, 'paz').setScale(1);
-    this.platforms3.create(7160, 317, 'paz').setScale(1);
-    this.platforms3.create(8216, 317, 'paz').setScale(1);
-
+    [6776, 7160, 8216].forEach(x => this.platforms3.create(x, 317, 'paz'));
     this.platforms4 = this.physics.add.staticGroup();
-    this.platforms4.create(7560, 317, 'pam').setScale(1);
-
+    this.platforms4.create(7560, 317, 'pam');
     this.platforms5 = this.physics.add.staticGroup();
-    this.platforms5.create(6960, 135, 'proj').setScale(1);
-    this.platforms5.create(7745, 168, 'proj').setScale(1);
-    this.platforms5.create(7840, 200, 'proj').setScale(1);
-    this.platforms5.create(8032, 120, 'proj').setScale(1);
-    this.platforms5.create(7935, 135, 'proj').setScale(1);
-
+    [[6960,135],[7745,168],[7840,200],[8032,120]]
+      .forEach(([x,y]) => this.platforms5.create(x, y, 'proj'));
+    // Plataforma de muerte
     this.platforms6 = this.physics.add.staticGroup();
-    this.platforms6.create(7230, 230, 'pdeath').setScale(1);
-    
+    this.platforms6.create(7230, 230, 'pdeath');
 
-    // — 2b) Rocas (obstáculo para proyectiles y jugador) —
+    // — 3) Rocas estáticas —
     this.rocks = this.physics.add.staticGroup();
-    this.rocks.create(1376, 402, 'roca').setScale(1);
-    this.rocks.create(1601, 402, 'roca').setScale(1);
-    this.rocks.create(3695, 402, 'roca').setScale(1);
-    this.rocks.create(3984, 402, 'roca').setScale(1);
-    this.rocks.create(4383, 402, 'roca').setScale(1);
-    this.rocks.create(4448, 402, 'roca').setScale(1);
-    this.rocks.create(6832, 146, 'roca').setScale(1);
-    this.rocks.create(7072, 146, 'roca').setScale(1);
-    this.rocks.create(7104, 146, 'roca').setScale(1);
+    [1376,1601,3695,3984,4383,4448].forEach(x => this.rocks.create(x, 402, 'roca'));
+    [6832,7072,7104].forEach(x => this.rocks.create(x, 146, 'roca'));
 
-    // — 2c) Rampa hecha de bloques 12×12 —
-    const blockSize  = 12;   // tamaño de tu sprite
-    const rampSteps  = 85;   // cuántos peldaños
-    const stepRise   = 3;    // cuántos px sube cada bloque
-    const startX     = 4870;  // origen X de la rampa
-    const startY     = 420;  // origen Y (encima de la plataforma)
-
+    // — 4) Rampa de bloques 12×12 —
     this.ramp = this.physics.add.staticGroup();
-    for (let i = 0; i < rampSteps; i++) {
-      const x = startX + i * blockSize;
-      const y = startY - i * stepRise;
-      this.ramp.create(x, y, 'pvio')
-        .setOrigin(0, 1)      // el bloque asienta con su base
-        .refreshBody();
+    const blockSize = 12, steps = 85, rise = 3;
+    for (let i = 0; i < steps; i++) {
+      this.ramp.create(4870 + i*blockSize, 420 - i*rise, 'pvio')
+        .setOrigin(0,1).refreshBody();
     }
 
-    // — 3) Jugador + colisiones contra plataformas y rocas —
+    // — 5) Jugador —
     this.player = this.physics.add.sprite(100, 350, 'player')
       .setBounce(0.1)
-      .setCollideWorldBounds(true)
-      .setScale(1);
-    this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.player, this.rocks);
-    this.physics.add.collider(this.player, this.ramp);
-    this.physics.add.collider(this.player, this.platforms2); 
-    this.physics.add.collider(this.player, this.platforms3);
-    this.physics.add.collider(this.player, this.platforms4);
-    this.physics.add.collider(this.player, this.platforms5);
-    this.physics.add.collider(this.player, this.platforms6);
+      .setCollideWorldBounds(true);
+    this.playerSpeed   = 150;
+    this.hasSpeedBoost = false;
 
+    // collider jugador ↔ estáticos
+    [
+      this.platforms, this.platforms2, this.platforms3,
+      this.platforms4, this.platforms5, this.platforms6,
+      this.rocks, this.ramp
+    ].forEach(g => this.physics.add.collider(this.player, g));
 
-
-    // — 2d) Resortes (salto potenciado) —
-    this.springs = this.physics.add.staticGroup();
-    const spring = this.springs.create(7370, 148, 'spring').setScale(1).refreshBody();
-
+    // — 6) Resortes —
+    const spring = this.physics.add.staticImage(7370,148,'spring').refreshBody();
     this.physics.add.collider(this.player, spring, p => {
       if (p.body.blocked.down) {
-        p.setVelocityY(-300);         // impulso hacia arriba
-        spring.setFrame(1);           // cambiar a frame comprimido
-        this.time.delayedCall(100, () => spring.setFrame(0)); // volver al frame original
+        p.setVelocityY(-300);
+        spring.setFrame(1);
+        this.time.delayedCall(100, ()=> spring.setFrame(0));
       }
     });
 
+    // — 7) Plataforma móvil —
+    const startX = 7935, startY = 170;
+    this.platformCollider = this.physics.add
+      .staticImage(startX, startY, 'proj')
+      .setOrigin(0.5,1).refreshBody();
+    this.platformDisplay = this.add.image(startX, startY, 'proj').setOrigin(0.5,1);
+    this.physics.add.collider(this.player, this.platformCollider);
+    this.tweens.add({
+      targets: { y: startY },
+      props: { y: { getEnd: ()=> startY - 50 } },
+      duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      onUpdate: (tween, obj) => {
+        this.platformDisplay.y  = obj.y;
+        this.platformCollider.y = obj.y;
+        this.platformCollider.refreshBody();
+      }
+    });
 
-    // — 4) Mundo & cámara —
-    this.cameras.main.setBounds(0, 0, bg.width, bg.height);
-    this.physics.world.setBounds(0, 0, bg.width, bg.height);
+    // — 8) Mundo & cámara —
+    this.cameras.main.setBounds(0,0,bg.width,bg.height);
+    this.physics.world.setBounds(0,0,bg.width,bg.height);
 
-    // — 5) Huevos recolectables —
-    this.eggs = this.physics.add.staticGroup();
-    this.eggs.create(400, 350, 'huevoAtaque').setScale(1);
-    this.eggs.create(800, 350, 'huevoFuego').setScale(1);
-    this.physics.add.overlap(this.player, this.eggs, this.collectEgg, null, this);
-
-    // — 6) Grupos de proyectiles —
+    // — 9) Proyectiles —
     this.attackProjectiles = this.physics.add.group();
     this.fireProjectiles   = this.physics.add.group();
-    this.physics.add.collider(this.attackProjectiles, this.rocks);
-
-    // — 7) Tecla de disparo —
-    this.input.keyboard.on('keydown-SPACE', () => this.shoot(), this);
-
-    // — 8) Cámara sigue al jugador —
-    this.cameras.main.startFollow(
-      this.player,
-      true,  // round pixels
-      0.1,   // lerp x
-      0.1,   // lerp y
-      -60,   // offsetX (izquierda)
-      0      // offsetY
-    );
-
-    // — 9) Controles de movimiento —
-    this.cursors = this.input.keyboard.createCursorKeys();
-
-     // — Enemigos —
-     this.enemies = this.physics.add.group();
- 
- 
-     // • Colisión jugador ↔ enemigos
-     this.physics.add.collider(this.player, this.enemies, () => {
-       console.log('Player hit!');
-     });
-     // • Hachas matan enemigos
-     this.physics.add.overlap(this.attackProjectiles, this.enemies, (p, e) => {
-       p.destroy();
-       e.destroy();
-     });
-     this.physics.add.overlap(this.fireProjectiles, this.enemies, (p, e) => {
-       p.destroy();
-       e.destroy();
-     });
-
-    // — 10) Animaciones —
-    if (!this.anims.exists('walk')) {
-      this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNumbers('player',{ start: 0, end: 3 }),
-        frameRate: 14,
-        repeat: -1
+    const destroyOnHit = p => p.destroy();
+    [this.platforms, this.platforms2, this.platforms3, this.platforms4, this.platforms5, this.ramp]
+      .forEach(g => {
+        this.physics.add.collider(this.attackProjectiles, g, destroyOnHit);
+        this.physics.add.collider(this.fireProjectiles,   g, destroyOnHit);
       });
-      this.anims.create({ key: 'idle', frames:[{ key:'player',frame:0 }], frameRate:10 });
-      this.anims.create({ key: 'jump', frames:[{ key:'player',frame:0 }], frameRate:10 });
-    }
-
-    // — 11) Animaciones de enemigos —
-    // Caracol
-    this.anims.create({
-      key: 'snailIdle',
-      frames: this.anims.generateFrameNumbers('snail', { start: 0, end: 1 }),
-      frameRate: 2,
-      repeat: -1
-    });
-    // Cuervo
-    this.anims.create({
-      key: 'crowFly',
-      frames: this.anims.generateFrameNumbers('crow', { start: 0, end: 1 }),
-      frameRate: 8,
-      repeat: -1
-    });
-    // Cobra
-    this.anims.create({
-      key: 'cobraIdle',
-      frames: this.anims.generateFrameNumbers('cobra', { start: 0, end: 1 }),
-      frameRate: 2,
-      repeat: -1
-    });
-    // Kello verde / marrón (cambian con damage)
-    this.anims.create({
-      key: 'kelloGreenIdle',
-      frames: this.anims.generateFrameNumbers('kelloGreen', { start: 0, end: 1 }),
-      frameRate: 4,
-      repeat: -1
-    });
-    this.anims.create({
-      key: 'kelloBrownIdle',
-      frames: this.anims.generateFrameNumbers('kelloBrown', { start: 0, end: 1 }),
-      frameRate: 4,
-      repeat: -1
+    // fuego destruye roca estática + 50 pts
+    this.physics.add.overlap(this.fireProjectiles, this.rocks, (proj, rock) => {
+      proj.destroy();
+      const { x, y } = rock;
+      rock.destroy();
+      this.addPoints(50, x, y);
     });
 
-    // — 12) Crear grupo general de enemigos —
-    this.enemies = this.physics.add.group();
-
-    // Caracol
-    const createSnail = (x, y) => {
-      const snail = this.enemies.create(x, y, 'snail').setScale(1).play('snailIdle');
-      snail.body.setAllowGravity(false);
-      snail.setImmovable(true);
-      snail.setData('type', 'snail');
+    // — 10) Huevos (power-ups) —
+    this.eggs = this.physics.add.group();
+    const spawnEgg = (x,y,key,powerKey) => {
+      const egg = this.eggs.create(x,y,key)
+        .setOrigin(0.5,1)
+        .setData('health',2)
+        .setData('powerKey',powerKey)
+        .setFrame(0);
+      egg.body.setAllowGravity(false);
+      egg.setImmovable(true);
     };
+    spawnEgg(400,410,'huevoAtaque','powerAttack');
+    spawnEgg(800,410,'huevoFuego',  'powerFire');
+    spawnEgg(1200,410,'huevoPatineta','powerpatineta');
+    this.physics.add.collider(this.player, this.eggs, (_p,e)=>this.hitEgg(e));
+    this.physics.add.overlap(this.attackProjectiles, this.eggs, (p,e)=>{ p.destroy(); this.hitEgg(e); });
+    this.physics.add.overlap(this.fireProjectiles,   this.eggs, (p,e)=>{ p.destroy(); this.hitEgg(e); });
 
-    createSnail.call(this, 770, 397);
-    createSnail.call(this, 930, 397);
-    createSnail.call(this, 980, 397);
-    createSnail.call(this, 1705, 397);
-    createSnail.call(this, 1800, 397);
-    createSnail.call(this, 1850, 397);
-    createSnail.call(this, 1900, 397);
+    // — 11) Disparo —
+    this.input.keyboard.on('keydown-SPACE', ()=>this.shoot(), this);
 
-    // Cuervo
-    const createCrow = (x, y) => {
-  const crow = this.enemies.create(x, y, 'crow').setScale(1).play('crowFly');
-  crow.body.setAllowGravity(false);
-  crow.setData('type', 'crow');
+    // — 12) Cámara & cursores —
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -60, 0);
 
-  // Movimiento horizontal y vertical en bucle (x ±25, y ±15)
-  this.tweens.add({
-    targets: crow,
-    x: x - 80, // se mueve 25px a la izquierda desde su posición original
-    y: y - 40, // y también sube un poco
-    yoyo: true,
-    repeat: -1,
-    duration: 1000,
-    ease: 'Sine.easeInOut',
-  });
-};
-
-    createCrow.call(this, 2860, 400);
-    createCrow.call(this, 3023, 400);
-    createCrow.call(this, 3172, 400);
-
-    // ---- Cobra (dispara bolas) ----
-    this.cobras = this.physics.add.group();
-    const cobra = this.enemies.create(4828, 400, 'cobra').setScale(1).play('cobraIdle');
-    cobra.body.setAllowGravity(false);
-    cobra.setImmovable(true);
-    cobra.setData('type', 'cobra');
-    this.cobraFireballs = this.physics.add.group();
-
-    // fireball ↔ jugador
-    this.physics.add.overlap(this.cobraFireballs, this.player, () => this.playerDie());
-
-    // disparo periódico
-    this.time.addEvent({
-      delay: 3000,
-      loop: true,
-      callback: () => {
-        const fb = this.cobraFireballs.create(cobra.x - 20, cobra.y, 'cobraFireball');
-        fb.body.setAllowGravity(false);
-        fb.setVelocityX(-100);
-    
-        // Destruir la fireball a los 1500 ms
-        this.time.delayedCall(1500, () => {
-          if (fb.active) fb.destroy();
-        });
-      }
-    });
-
-    this.physics.add.overlap(this.attackProjectiles, this.cobraFireballs, (p, f) => {
-      p.destroy();
-      f.destroy();
-    });
-    this.physics.add.overlap(this.fireProjectiles, this.cobraFireballs, (p, f) => {
-      p.destroy();
-      f.destroy();
-    });
-
-    // ---- Kello (verde → marrón → muere) ----
-    this.kellos = this.physics.add.group();
-    const kello = this.enemies.create(1100, 380, 'kelloGreen')
-      .setScale(1)
+    // — 13) Enemigos generales —
+    this.enemies = this.physics.add.group();
+    this.physics.add.collider(this.player, this.enemies, this.onPlayerHitEnemy, null, this);
+    // Caracoles
+    const createSnail = (x,y) => {
+      const s = this.enemies.create(x,y,'snail').play('snailIdle');
+      s.body.setAllowGravity(false);
+      s.setImmovable(true);
+      s.setData('type','snail');
+    };
+    [770,930,980,1705,1800,1850,1900].forEach(x=>createSnail.call(this,x,397));
+    [6720,7185,7230].forEach(x=>createSnail.call(this,x,141));
+    // Cuervos
+    const createCrow = (x,y) => {
+      const c = this.enemies.create(x,y,'crow').play('crowFly');
+      c.body.setAllowGravity(false);
+      c.setData('type','crow');
+      this.tweens.add({
+        targets: c, x: x - 80, y: y - 40,
+        yoyo: true, repeat: -1,
+        duration: 1000, ease: 'Sine.easeInOut'
+      });
+    };
+    [2860,3023,3172].forEach(x=>createCrow.call(this,x,400));
+    // Kello
+    const kello = this.enemies.create(7555,146,'kelloGreen')
       .play('kelloGreenIdle')
-      .setData('health', 2)
-      .setData('type', 'kello');
+      .setData('type','kello')
+      .setData('health',2);
     kello.body.setAllowGravity(false);
     kello.setImmovable(true);
 
-    // — 13) Colisiones y overlaps enemigo↔jugador, proyectil↔enemigo —
-    this.physics.add.collider(this.player, this.enemies, () => playerDie());
+    // matar enemigos +100 pts
+    this.physics.add.overlap(this.attackProjectiles, this.enemies, this.killHandler, null, this);
+    this.physics.add.overlap(this.fireProjectiles,   this.enemies, this.killHandler, null, this);
 
-    const killHandler = (proj, enemy) => {
-      proj.destroy();
-    
-      // Si es Kello, revisar vida antes de mostrar animación
-      if (enemy.getData('type') === 'kello') {
-        let hp = enemy.getData('health') - 1;
-        enemy.setData('health', hp);
-        if (hp === 1) {
-          enemy.setTexture('kelloBrown');
-          enemy.play('kelloBrownIdle');
-          enemy.body.setAllowGravity(false);  // que NO caiga
-          enemy.setImmovable(true);
-          return;  // Salimos antes de hacer la animación de muerte
+    // — Cobras & fireballs —
+    const cobraSpawns = [ {x:4828,y:400}, {x:6000,y:141}, {x:6150,y:141} ];
+    this.cobras          = this.physics.add.group();
+    this.cobraFireballs = this.physics.add.group();
+    cobraSpawns.forEach(({x,y})=> {
+      const cb = this.cobras.create(x,y,'cobra').play('cobraIdle');
+      cb.body.setAllowGravity(false);
+      cb.setData('type','cobra');
+      this.time.addEvent({
+        delay: 3000, loop: true,
+        callback: () => {
+          if (!cb.active) return;
+          const fb = this.cobraFireballs.create(cb.x-20, cb.y, 'cobraFireball');
+          fb.body.setAllowGravity(false);
+          fb.setVelocityX(-100);
+          this.time.delayedCall(1500, ()=> fb.active && fb.destroy());
         }
-      }
-    
-      // animación de muerte (mini salto) con PNG
-      const deathKey = enemy.getData('type') + 'Death';
-      const fx = this.add.sprite(enemy.x, enemy.y, deathKey).setScale(1);
-      this.tweens.add({
-        targets: fx,
-        y: fx.y - 20,
-        duration: 200,
-        yoyo: true,
-        onComplete: () => fx.destroy()
       });
-    
-      enemy.destroy();
-    };
+    });
+    this.physics.add.overlap(this.cobraFireballs, this.player, this.onHitByFireball, null, this);
+    this.physics.add.overlap(this.attackProjectiles, this.cobras, this.killHandler, null, this);
+    this.physics.add.overlap(this.fireProjectiles,   this.cobras, this.killHandler, null, this);
+    this.physics.add.collider(this.player, this.cobras, this.onPlayerHitEnemy, null, this);
 
-    this.physics.add.overlap(this.attackProjectiles, this.enemies, killHandler);
-    this.physics.add.overlap(this.fireProjectiles,   this.enemies, killHandler);
+    // — 14) Obstáculo fuego —
+    this.fires = this.physics.add.staticGroup();
+    this.fires.create(4560,397,'fire');
+    this.fires.create(6465,141,'fire');
+    this.physics.add.overlap(this.player, this.fires, this.onFireTouch, null, this);
 
-    // si el personaje toca con la plataforma6 se reinicia la escena
-    this.physics.add.overlap(this.player, this.platforms6, () => {
-      this.scene.restart();
+    // — 15) Rocas “activables” en la rampa —
+    this.fallingRocks        = this.physics.add.group();
+    this.rockSpawned         = false;
+    this.rockSpawnThresholdX = 4850;
+    this.physics.add.collider(this.fallingRocks, this.ramp);
+    [
+      { x: 5100, y: 335 },
+      { x: 5400, y: 260 },
+      { x: 5700, y: 185 },
+    ].forEach(({x,y}) => {
+      const rock = this.fallingRocks.create(x,y,'fallRock');
+      rock.body.setAllowGravity(false);
+      rock.setBounce(0.2).setCollideWorldBounds(true).setData('activated', false);
+    });
+    // fuego destruye rocas +50 pts
+    this.physics.add.overlap(this.fireProjectiles, this.fallingRocks, (proj, rock) => {
+      proj.destroy();
+      const { x, y } = rock;
+      rock.destroy();
+      this.addPoints(50, x, y);
+    });
+    // jugador con patineta destruye rocas +50 pts
+    this.physics.add.collider(this.player, this.fallingRocks, (player, rock) => {
+      const { x, y } = rock;
+      rock.destroy();
+      if (this.hasSpeedBoost) {
+        this.hasSpeedBoost = false;
+        this.playerSpeed   = 150;
+        this.player.setTexture('player');
+        this.player.play('idle', true);
+        this.addPoints(50, x, y);
+      } else {
+        this.handlePlayerDeath();
+      }
     });
 
+    // — 16) Plataforma de muerte —
+    this.physics.add.collider(this.player, this.platforms6, ()=> {
+      this.handlePlayerDeath();
+    });
+
+    // —–––––––– PUNTUACIÓN –––––––––—
+    this.score = 0;
+    this.scoreText = this.add.text(
+      this.cameras.main.width/2, 16,
+      '0',
+      { fontSize: '12px', fill: '#ffffff' }
+    )
+    .setScrollFactor(0)
+    .setOrigin(0.5, 0);
+
+    // —–––––––– RECOLECTABLES –––––––––—
+    this.collectibles = this.physics.add.group();
+    const fruits = [
+      { x: 200,  y: 350, key: 'apple',  points:  50 },
+      { x: 3200, y: 350, key: 'banana', points:  50 },
+      { x: 3400, y: 350, key: 'peach',  points: 100 },
+      { x: 3600, y: 350, key: 'carrot', points: 100 }
+    ];
+    fruits.forEach(({x,y,key,points}) => {
+      const f = this.collectibles.create(x,y,key);
+      f.body.setAllowGravity(false);
+      f.setData('points', points);
+    });
+    this.physics.add.overlap(this.player, this.collectibles, this.collectFruit, null, this);
+
   }
 
-  collectEgg(player, egg) {
-    egg.destroy();
-    this.currentWeapon = egg.texture.key === 'huevoAtaque' ? 'attack' : 'fire';
+  update() {
+    // — movimiento & animaciones —
+    if (this.player.active) {
+      if (this.cursors.left.isDown) {
+        this.player.setVelocityX(-this.playerSpeed).setFlipX(true);
+      } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(this.playerSpeed).setFlipX(false);
+      } else {
+        this.player.setVelocityX(0);
+      }
+      if (this.hasSpeedBoost) {
+        this.player.play('skate', true);
+      } else if (this.player.body.blocked.down) {
+        this.player.body.velocity.x === 0
+          ? this.player.play('idle', true)
+          : this.player.play('walk', true);
+      } else {
+        this.player.play('jump', true);
+      }
+      if (this.cursors.up.isDown && this.player.body.blocked.down) {
+        this.player.setVelocityY(-250);
+      }
+    }
+
+    // — activar rocas en la rampa —
+    if (!this.rockSpawned && this.player.x > this.rockSpawnThresholdX) {
+      const vx = -50;
+      const vy = vx * (-0.25); // ≈ +12.5
+      this.fallingRocks.getChildren().forEach(rock => {
+        if (!rock.getData('activated')) {
+          rock.setData('activated', true);
+          rock.body.setAllowGravity(false);
+          rock.setVelocity(vx, vy);
+        }
+      });
+      this.rockSpawned = true;
+    }
   }
+
+  // — Métodos auxiliares —
 
   shoot() {
     if (!this.currentWeapon) return;
-
     const dir = this.player.flipX ? -1 : 1;
-    const spawnX = this.player.x + dir * 20;
-    const spawnY = this.player.y - 10;
-    const velX = 300 * dir;
-    const velY = 100;
+    const sx  = this.player.x + dir*20;
+    const sy  = this.player.y - 10;
+    const vx  = 300*dir, vy = 100;
+    const grp = this.currentWeapon === 'attack'
+      ? this.attackProjectiles
+      : this.fireProjectiles;
+    const key = this.currentWeapon === 'attack'
+      ? 'bolaAtaque'
+      : 'bolaFuego';
 
-    if (this.currentWeapon === 'attack') {
-      // Primer ataque: rebota en roca y luego cae
-      const b = this.attackProjectiles.create(spawnX, spawnY, 'bolaAtaque')
-        .setScale(1)
-        .setVelocity(velX, velY)
-        .setGravityY(0)
-        .setBounce(0, 1)          // solo rebote vertical
-        .setCollideWorldBounds(true);
+    grp.create(sx,sy,key)
+      .setVelocity(vx,vy)
+      .setGravityY(0)
+      .setBounce(this.currentWeapon==='attack'?1:0)
+      .setCollideWorldBounds(true);
+  }
 
-      // Rebote con rocas
-      this.physics.add.collider(b, this.rocks, (proj, rock) => {
-        proj.setVelocity(0, 0);
-        proj.body.setGravityY(200);
-      });
-
-      // **Desaparece al tocar plataformas**
-      this.physics.add.collider(b, this.platforms, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
-      this.physics.add.collider(b, this.ramp, proj => proj.destroy());
-
+  onHitByFireball(player, fireball) {
+    fireball.destroy();
+    if (this.hasSpeedBoost) {
+      this.hasSpeedBoost = false;
+      this.playerSpeed   = 150;
+      this.player.setTexture('player');
+      this.player.play('idle', true);
     } else {
-      // Segundo ataque: destruye rocas y (luego) enemigos
-      const b = this.fireProjectiles.create(spawnX, spawnY, 'bolaFuego')
-        .setScale(1)
-        .setVelocity(velX, velY)
-        .setGravityY(0)
-        .setCollideWorldBounds(true);
+      this.handlePlayerDeath();
+    }
+  }
 
-      // Destruye rocas
-      this.physics.add.overlap(b, this.rocks, (proj, rock) => {
-        proj.destroy();
-        rock.destroy();
+  onFireTouch(player, fire) {
+    if (this.hasSpeedBoost) {
+      fire.destroy();
+      this.hasSpeedBoost = false;
+      this.playerSpeed   = 150;
+      this.player.setTexture('player');
+      this.player.play('idle', true);
+    } else {
+      this.handlePlayerDeath();
+    }
+  }
+
+  hitEgg(egg) {
+    if (!egg.active) return;
+    let hp = egg.getData('health') - 1;
+    egg.setData('health', hp);
+  
+    if (hp === 1) {
+      egg.setFrame(1);
+      this.tweens.add({ targets: egg, y: egg.y - 30, duration: 150, yoyo: true });    }
+    else if (hp <= 0) {
+      const { x, y, data } = egg;
+      const key = data.get('powerKey');
+  
+      // animación de rotura (o shake, o frame final…)
+      this.tweens.add({
+        targets: egg,
+        y: egg.y - 40,
+        angle:  50,      // por ejemplo rotamos
+        duration: 200,
+        onComplete: () => {
+          egg.destroy();
+          this.spawnPowerUp(x+25, y-5, key);
+        }
       });
-
-      // **Desaparece al tocar plataformas**
-      this.physics.add.collider(b, this.platforms, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms2, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms3, proj => proj.destroy());
-      this.physics.add.collider(b, this.platforms4, proj => proj.destroy());
-      this.physics.add.collider(b, this.ramp, proj => proj.destroy());
-
     }
   }
-  //cuando playerdie este activa quiero q te mande a gameover
-  playerDie() {
-    this.scene.start('GameOver'); 
+
+  spawnPowerUp(x, y, key) {
+    const item = this.physics.add.sprite(x, y, key)
+      .setBounce(0.2)
+      .setCollideWorldBounds(true);
+    item.body.setAllowGravity(false);
+  
+    if (key === 'powerpatineta') {
+      this.physics.add.overlap(this.player, item, () => {
+        this.hasSpeedBoost = true;
+        this.playerSpeed   = 250;
+        this.player.setTexture('playerSkate');
+        this.player.play('skate', true);
+        item.destroy();
+      }, null, this);
+    } else {
+      this.physics.add.overlap(this.player, item, () => {
+        this.currentWeapon = key === 'powerAttack' ? 'attack' : 'fire';
+        item.destroy();
+      }, null, this);
+    }
   }
 
+  killHandler(proj, enemy) {
+    proj.destroy();
+    if (!enemy || !enemy.active) return;
+    if (enemy.getData('type') === 'kello') {
+      let hp = enemy.getData('health') - 1;
+      enemy.setData('health', hp);
+      if (hp === 1) {
+        enemy.setTexture('kelloBrown');
+        enemy.play('kelloBrownIdle');
+        return;
+      }
+    }
+    const deathKey = enemy.getData('type') + 'Death';
+    const fx = this.add.sprite(enemy.x, enemy.y, deathKey).setScale(1);
+    this.tweens.add({
+      targets: fx,
+      y: fx.y - 20,
+      duration: 200,
+      yoyo: true,
+      onComplete: ()=> fx.destroy()
+    });
 
-  update() {
-    // Movimiento horizontal
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-150).setFlipX(true);
-      if (this.player.body.blocked.down) this.player.play('walk', true);
-    }
-    else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(150).setFlipX(false);
-      if (this.player.body.blocked.down) this.player.play('walk', true);
-    }
-    else {
-      this.player.setVelocityX(0);
-      if (this.player.body.blocked.down) this.player.play('idle', true);
-    }
+    // +100 pts por enemigo
+    this.addPoints(100, enemy.x, enemy.y);
+    enemy.destroy();
+  }
 
-    // Salto
-    if (this.cursors.up.isDown && this.player.body.blocked.down) {
-      this.player.setVelocityY(-250);
-      this.player.play('jump', true);
+  collectFruit(player, fruit) {
+    const pts = fruit.getData('points');
+    this.addPoints(pts, fruit.x, fruit.y);
+    fruit.destroy();
+  }
+
+  addPoints(points, worldX, worldY) {
+    // 1) sumar
+    this.score += points;
+    this.scoreText.setText(this.score);
+
+    // 2) pantalla
+    const cam = this.cameras.main;
+    const sx = worldX - cam.scrollX;
+    const sy = worldY - cam.scrollY;
+
+    // 3) popup
+    const key   = points === 100 ? 'score100' : 'score50';
+    const popup = this.add.image(sx, sy - 20, key)
+      .setScrollFactor(0)
+      .setOrigin(0.5,1)
+      .setDepth(10);
+
+    this.tweens.add({
+      targets: popup,
+      y: popup.y - 20,
+      alpha: { from: 1, to: 0 },
+      duration: 500,
+      ease: 'Power1',
+      onComplete: ()=> popup.destroy()
+    });
+  }
+
+  handlePlayerDeath() {
+    // mini animación de muerte
+    const death = this.add.sprite(this.player.x, this.player.y, 'playerDeath');
+    death.play('playerDeathAnim');
+    this.player.disableBody(true, true);
+  
+    // resetear arma
+    this.currentWeapon = null;
+  
+    // restar vida y actualizar UI
+    this.lives--;
+    this.livesText.setText(`${this.lives}`);
+  
+    // reiniciar o GameOver
+    this.time.delayedCall(1000, () => {
+      if (this.lives > 0) {
+        this.scene.restart({ lives: this.lives });
+      } else {
+        this.scene.start('GameOver');
+      }
+    });
+  }
+
+  onPlayerHitEnemy(player, enemy) {
+    if (this.hasSpeedBoost) {
+      enemy && enemy.destroy();
+      this.hasSpeedBoost = false;
+      this.playerSpeed   = 150;
+      this.player.setTexture('player');
+      this.player.play('idle', true);
+    } else {
+      this.handlePlayerDeath();
     }
   }
 }

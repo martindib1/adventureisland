@@ -13,3 +13,11 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+/* === Añadido: fuente Pixel Art === */
+@font-face {
+  font-family: 'Pixel';
+  src: url('/assets/Pixel.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

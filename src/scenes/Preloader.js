@@ -15,14 +15,13 @@ export class Preloader extends Scene {
     this.load.image('proj','proj.png');
     this.load.image('pdeath','fondo.png');
     this.load.image('roca','roca.png');
-    this.load.image('boulder','bola.png');
+    this.load.image('fallRock','bola.png');
     this.load.image('fire','fire.png');
     this.load.spritesheet('spring','trampolin.png',{frameWidth:24,frameHeight:14});
-    this.load.image('huevoAtaque','huevo.png');
-    this.load.image('huevoFuego','huevo.png');
+    this.load.image('powerAttack', 'hacha.png');
+    this.load.image('powerFire',   'fuego2.png');
     this.load.image('bolaAtaque','hacha.png');
     this.load.image('bolaFuego','fuego2.png');
-    this.load.spritesheet('player','correr.png',{frameWidth:18,frameHeight:23});
     this.load.spritesheet('snail','caracolanim.png',{frameWidth:24,frameHeight:24});
     this.load.spritesheet('crow','crow.png',{frameWidth:16,frameHeight:15});
     this.load.image('cobraFireball','cobrafireball.png');
@@ -33,8 +32,87 @@ export class Preloader extends Scene {
     this.load.image('snailDeath','deathcaracol.png');
     this.load.image('crowDeath','deathcrow.png');
     this.load.image('cobraDeath','deathcobra.png');
+    this.load.spritesheet('huevoAtaque', 'huevoroto.png', { frameWidth: 22, frameHeight: 16 });
+    this.load.spritesheet('huevoFuego',   'huevoroto.png',   { frameWidth: 22, frameHeight: 16 });
+    this.load.spritesheet('huevoPatineta',   'huevoroto.png',   { frameWidth: 22, frameHeight: 16 });
+    this.load.spritesheet('playerSkate','patineta.png',{frameWidth:24,frameHeight:32});
+    this.load.image('powerpatineta','patin.png');
+    this.load.spritesheet('player','walki.png',{frameWidth:18,frameHeight:32});
+    this.load.spritesheet('idlep','idle.png',{frameWidth:16,frameHeight:32});
+    this.load.spritesheet('jumpp','jumpp.png',{frameWidth:20,frameHeight:32});
+    this.load.spritesheet('playerDeath', 'playerdeath.png', { frameWidth: 24, frameHeight: 24 });
+    this.load.image('apple', 'apple.png');
+    this.load.image('banana', 'banana.png');
+    this.load.image('peach', 'peach.png');
+    this.load.image('carrot', 'carrot.png');
+    this.load.image('score50', '50pts.png');
+    this.load.image('score100','100pts.png');
+    this.load.image('vida','vidachico.png');
   }
   create() {
+
+     // Animaciones del jugador
+     this.anims.create({
+      key: 'walk',
+      frames: this.anims.generateFrameNumbers('player',{ start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'idle',
+      frames: this.anims.generateFrameNumbers('idlep',{ start: 0, end: 1 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'jump',
+      frames: this.anims.generateFrameNumbers('jumpp',{ start: 0, end: 1 }),
+      frameRate: 4,
+      repeat: -1
+    });
+
+    // Animaciones enemigos
+    this.anims.create({
+      key: 'snailIdle',
+      frames: this.anims.generateFrameNumbers('snail', { start: 0, end: 1 }),
+      frameRate: 2,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'crowFly',
+      frames: this.anims.generateFrameNumbers('crow', { start: 0, end: 1 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'cobraIdle',
+      frames: this.anims.generateFrameNumbers('cobra', { start: 0, end: 1 }),
+      frameRate: 2,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'kelloGreenIdle',
+      frames: this.anims.generateFrameNumbers('kelloGreen', { start: 0, end: 1 }),
+      frameRate: 4,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'kelloBrownIdle',
+      frames: this.anims.generateFrameNumbers('kelloBrown', { start: 0, end: 1 }),
+      frameRate: 4,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'skate',
+      frames: this.anims.generateFrameNumbers('playerSkate',{ start:0, end:1 }),
+      frameRate: 12, repeat: -1
+    });
+    this.anims.create({
+      key: 'playerDeathAnim',
+      frames: this.anims.generateFrameNumbers('playerDeath',{ start:0, end:3 }),
+      frameRate: 6, repeat: -1
+    });
+
      this.scene.start('MainMenu'); 
     }
 }
