@@ -1,105 +1,87 @@
 import { Scene } from 'phaser';
 
-export class Game2 extends Scene {
+export class Game3 extends Scene {
   constructor() {
-    super('Game2');
+    super('Game3');
   }
 
   init(data) {
-    // Inicializamos vidas, si vienen por restart
     this.lives = data.lives != null ? data.lives : 3;
+    this.score = data.score != null ? data.score : 0;
   }
 
   create() {
     // — 1) Fondo —
-    const bg = this.add.image(0, 0, 'mapita').setOrigin(0, 0);
+    const bg = this.add.image(0, 0, 'mapa2').setOrigin(0, 0);
+    this.mapWidth = bg.width;          // ancho del mapa para el auto‐walk
+    this.autoWalk = false;
 
     this.lifeIcon = this.add
-      .image(35, 20, 'vida')
-      .setOrigin(0, 0)
-      .setScrollFactor(0);
+    .image(35, 20, 'vida')
+    .setOrigin(0, 0)
+    .setScrollFactor(0);
 
     // — VIDAS —
-    this.livesText = this.add.text(
-      45, 10,
-      `${this.lives}`,
-      {
-        fontFamily: 'pixelart',
-        fontSize: '100px',
-        color: '#ffffff'
-      }
-    )
+    this.livesText = this.add.text(45, 10, `${this.lives}`, {
+      fontFamily: 'pixelart', fontSize: '100px', color: '#ffffff'
+    })
       .setScrollFactor(0)
       .setOrigin(0, 0)
       .setScale(0.2);
 
     // — 2) Plataformas fijas —
     this.platforms  = this.physics.add.staticGroup();
-    this.platforms.create(2430, 414, 'plataforma');
-    this.platforms2 = this.physics.add.staticGroup();
-    this.platforms2.create(6225, 317, 'psal');
-    this.platforms3 = this.physics.add.staticGroup();
-    [6776, 7160, 8216].forEach(x => this.platforms3.create(x, 317, 'paz'));
-    this.platforms4 = this.physics.add.staticGroup();
-    this.platforms4.create(7560, 317, 'pam');
-    this.platforms5 = this.physics.add.staticGroup();
-    [[6960,135],[7745,168],[7840,200],[8032,120]]
-      .forEach(([x,y]) => this.platforms5.create(x, y, 'proj'));
-    // Plataforma de muerte (antes collider, ahora overlap)
+    this.platforms.create(3810, 205, 'plat21');
+    this.platforms.create(7037, 143, 'plat22');
+    this.platforms.create(6719, 110, 'plat23');
+    this.platforms.create(7712, 184, 'plat24');
+    this.platforms.create(7840, 168, 'plat24');
+    this.platforms.create(8096, 200, 'plat25');
     this.platforms6 = this.physics.add.staticGroup();
     this.platforms6.create(7230, 230, 'pdeath');
 
     // — 3) Rocas estáticas —
     this.rocks = this.physics.add.staticGroup();
-    [1376,1601,3695,3984,4383,4448].forEach(x => this.rocks.create(x, 402, 'roca'));
-    [6832,7072,7104].forEach(x => this.rocks.create(x, 146, 'roca'));
+    [150].forEach(x => this.rocks.create(x, 402, 'roca'));
 
-    // — 4) Rampa de bloques 12×12 —
+    // — 4) Rampa de bloques —
     this.ramp = this.physics.add.staticGroup();
-    const blockSize = 12, steps = 85, rise = 3;
+    const blockSize = 12, steps = 22, rise = 3;
     for (let i = 0; i < steps; i++) {
-      this.ramp.create(4870 + i*blockSize, 420 - i*rise, 'pvio')
+      this.ramp.create(6390 + i * blockSize, 182 - i * rise, 'cuadrao')
         .setOrigin(0,1).refreshBody();
     }
+    for (let i = 0; i < steps; i++) {
+        this.ramp.create(6790 + i * blockSize, 120 + i * rise, 'cuadrao')
+          .setOrigin(0,1).refreshBody();
+      }
+      for (let i = 0; i < steps; i++) {
+        this.ramp.create(7030 + i * blockSize, 182 - i * rise, 'cuadrao')
+          .setOrigin(0,1).refreshBody();
+      }
+      for (let i = 0; i < steps; i++) {
+          this.ramp.create(7300 + i * blockSize, 120 + i * rise, 'cuadrao')
+            .setOrigin(0,1).refreshBody();
+        }
+    
 
     // — 5) Jugador —
-    this.player = this.physics.add.sprite(100, 350, 'player')
-      .setBounce(0.1)
-      .setCollideWorldBounds(true);
+    this.player = this.physics.add.sprite(100, 100, 'player')
+      .setBounce(0.1);
     this.playerSpeed   = 150;
     this.hasSpeedBoost = false;
 
-    // collider jugador ↔ estáticos
-    [
-      this.platforms, this.platforms2, this.platforms3,
-      this.platforms4, this.platforms5,this.rocks, this.ramp
-    ].forEach(g => this.physics.add.collider(this.player, g));
+    // colliders estáticos
+    [ this.platforms, this.rocks, this.ramp ]
+      .forEach(g => this.physics.add.collider(this.player, g));
 
     // — 6) Resortes —
-    const spring = this.physics.add.staticImage(7370,148,'spring').refreshBody();
+    const spring = this.physics.add.staticImage(3695,163,'spring').refreshBody();
     this.physics.add.collider(this.player, spring, p => {
       if (p.body.blocked.down) {
         p.setVelocityY(-300);
         spring.setFrame(1);
         this.time.delayedCall(100, ()=> spring.setFrame(0));
-      }
-    });
-
-    // — 7) Plataforma móvil —
-    const startX = 7935, startY = 170;
-    this.platformCollider = this.physics.add
-      .staticImage(startX, startY, 'proj')
-      .setOrigin(0.5,1).refreshBody();
-    this.platformDisplay = this.add.image(startX, startY, 'proj').setOrigin(0.5,1);
-    this.physics.add.collider(this.player, this.platformCollider);
-    this.tweens.add({
-      targets: { y: startY },
-      props: { y: { getEnd: ()=> startY - 50 } },
-      duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      onUpdate: (tween, obj) => {
-        this.platformDisplay.y  = obj.y;
-        this.platformCollider.y = obj.y;
-        this.platformCollider.refreshBody();
       }
     });
 
@@ -111,12 +93,11 @@ export class Game2 extends Scene {
     this.attackProjectiles = this.physics.add.group();
     this.fireProjectiles   = this.physics.add.group();
     const destroyOnHit = p => p.destroy();
-    [this.platforms, this.platforms2, this.platforms3, this.platforms4, this.platforms5, this.ramp]
+    [ this.platforms, this.ramp ]
       .forEach(g => {
         this.physics.add.collider(this.attackProjectiles, g, destroyOnHit);
         this.physics.add.collider(this.fireProjectiles,   g, destroyOnHit);
       });
-    // fuego destruye roca estática + 50 pts
     this.physics.add.overlap(this.fireProjectiles, this.rocks, (proj, rock) => {
       proj.destroy();
       const { x, y } = rock;
@@ -129,15 +110,13 @@ export class Game2 extends Scene {
     const spawnEgg = (x,y,key,powerKey) => {
       const egg = this.eggs.create(x,y,key)
         .setOrigin(0.5,1)
-        .setData('health',2)
-        .setData('powerKey',powerKey)
+        .setData('health', 2)
+        .setData('powerKey', powerKey)
         .setFrame(0);
       egg.body.setAllowGravity(false);
       egg.setImmovable(true);
     };
-    spawnEgg(512,410,'huevoAtaque','powerAttack');
-    spawnEgg(3000,410,'huevoFuego',  'powerFire');
-    spawnEgg(2366,410,'huevoPatineta','powerpatineta');
+    spawnEgg(200,163,'huevoFuego',  'powerFire');
     this.physics.add.collider(this.player, this.eggs, (_p,e)=>this.hitEgg(e));
     this.physics.add.overlap(this.attackProjectiles, this.eggs, (p,e)=>{ p.destroy(); this.hitEgg(e); });
     this.physics.add.overlap(this.fireProjectiles,   this.eggs, (p,e)=>{ p.destroy(); this.hitEgg(e); });
@@ -153,14 +132,18 @@ export class Game2 extends Scene {
     this.enemies = this.physics.add.group();
     this.physics.add.collider(this.player, this.enemies, this.onPlayerHitEnemy, null, this);
     // Caracoles
-    const createSnail = (x,y) => {
-      const s = this.enemies.create(x,y,'snail').play('snailIdle');
-      s.body.setAllowGravity(false);
-      s.setImmovable(true);
-      s.setData('type','snail');
+    const createAraña = (x,y) => {
+      const a = this.enemies.create(x,y,'araña').play('arañaIdle');
+      a.body.setAllowGravity(false);
+      a.setData('type','araña');
+      this.tweens.add({
+        targets: a, y: y - 40,
+        yoyo: true, repeat: -1,
+        duration: 1000, ease: 'Sine.easeInOut'
+      });
     };
-    [725,950,1170,1250,1690,1770,1815,1860].forEach(x=>createSnail.call(this,x,397));
-    [6720,7185,7230].forEach(x=>createSnail.call(this,x,141));
+    [725,950,1170,1250,1690,1770,1815,1860].forEach(x=>createAraña.call(this,x,120));
+    [2000].forEach(x=>createAraña.call(this,x,130));
     // Cuervos
     const createCrow = (x,y) => {
       const c = this.enemies.create(x,y,'crow').play('crowFly');
@@ -227,12 +210,11 @@ export class Game2 extends Scene {
     // — 15) Rocas “activables” en la rampa —
     this.fallingRocks        = this.physics.add.group();
     this.rockSpawned         = false;
-    this.rockSpawnThresholdX = 4850;
+    this.rockSpawnThresholdX = 6400;
     this.physics.add.collider(this.fallingRocks, this.ramp);
     [
-      { x: 5100, y: 335 },
-      { x: 5400, y: 260 },
-      { x: 5700, y: 185 },
+      { x: 6500, y: 127 },
+      { x: 6600, y: 102 },
     ].forEach(({x,y}) => {
       const rock = this.fallingRocks.create(x,y,'fallRock');
       rock.body.setAllowGravity(false);
@@ -244,20 +226,6 @@ export class Game2 extends Scene {
       const { x, y } = rock;
       rock.destroy();
       this.addPoints(50, x, y);
-    });
-    // jugador con patineta destruye rocas +50 pts
-    this.physics.add.collider(this.player, this.fallingRocks, (player, rock) => {
-      const { x, y } = rock;
-      rock.destroy();
-      if (this.hasSpeedBoost) {
-        this.hasSpeedBoost = false;
-        this.playerSpeed   = 150;
-        this.player.setTexture('player');
-        this.player.play('idle', true);
-        this.addPoints(50, x, y);
-      } else {
-        this.handlePlayerDeath();
-      }
     });
 
     // — 16) Plataforma de muerte — ahora overlap
@@ -337,7 +305,26 @@ export class Game2 extends Scene {
   }
 
   update() {
-    // — movimiento & animaciones —
+    // — 1) ACTIVAR AUTO‐WALK —
+    if (!this.autoWalk && this.player.x >= 8230) {
+      this.autoWalk = true;
+      this.playerSpeed = 100;  // velocidad de auto‐caminar
+    }
+
+    // — 2) SI ESTÁ AUTO‐WALK, ignorar input y mover solo a la derecha —
+    if (this.autoWalk) {
+      this.player.setVelocityX(this.playerSpeed);
+      this.player.setFlipX(false);
+      this.player.play('walk', true);
+
+      // cuando salga del mapa, vamos a Game3
+      if (this.player.x > this.mapWidth + this.player.width) {
+        this.scene.start('Game3', { lives: this.lives, score: this.score });
+      }
+      return;
+    }
+
+    // — 3) LÓGICA NORMAL DE CONTROLES —
     if (this.player.active) {
       if (this.cursors.left.isDown) {
         this.player.setVelocityX(-this.playerSpeed).setFlipX(true);
@@ -377,25 +364,7 @@ export class Game2 extends Scene {
 
   // — Métodos auxiliares —
 
-  shoot() {
-    if (!this.currentWeapon) return;
-    const dir = this.player.flipX ? -1 : 1;
-    const sx  = this.player.x + dir*20;
-    const sy  = this.player.y - 10;
-    const vx  = 300*dir, vy = 100;
-    const grp = this.currentWeapon === 'attack'
-      ? this.attackProjectiles
-      : this.fireProjectiles;
-    const key = this.currentWeapon === 'attack'
-      ? 'bolaAtaque'
-      : 'bolaFuego';
-
-    grp.create(sx,sy,key)
-      .setVelocity(vx,vy)
-      .setGravityY(0)
-      .setBounce(this.currentWeapon==='attack'?1:0)
-      .setCollideWorldBounds(true);
-  }
+  
 
   onHitByFireball(player, fireball) {
     fireball.destroy();
@@ -421,32 +390,71 @@ export class Game2 extends Scene {
     }
   }
 
+  shoot() {
+    if (!this.currentWeapon) return;
+    const dir = this.player.flipX ? -1 : 1;
+    const sx  = this.player.x + dir * 20;
+    const sy  = this.player.y - 10;
+    const vx  = 300 * dir, vy = 100;
+    const grp = this.currentWeapon === 'attack'
+      ? this.attackProjectiles
+      : this.fireProjectiles;
+    const key = this.currentWeapon === 'attack'
+      ? 'bolaAtaque'
+      : 'bolaFuego';
+
+    const proj = grp.create(sx, sy, key)
+      .setVelocity(vx, vy)
+      .setGravityY(0)
+      .setBounce(this.currentWeapon==='attack'?1:0)
+      .setCollideWorldBounds(true);
+
+    // arrancar su animación
+    if (key === 'bolaAtaque') {
+      proj.play('axeSpin');
+    } else {
+      proj.play('fireFlicker');
+    }
+  }
+
   hitEgg(egg) {
     if (!egg.active) return;
     let hp = egg.getData('health') - 1;
     egg.setData('health', hp);
-  
+
     if (hp === 1) {
       egg.setFrame(1);
-      this.tweens.add({ targets: egg, y: egg.y - 30, duration: 150, yoyo: true });    }
+      this.tweens.add({ targets: egg, y: egg.y - 30, duration: 150, yoyo: true });
+    }
     else if (hp <= 0) {
-      const { x, y, data } = egg;
-      const key = data.get('powerKey');
-  
-      // animación de rotura (o shake, o frame final…)
+      // desactivar física para que no siga colisionando
+      egg.body.enable = false;
+
+      const { x, y } = egg;
+      const key = egg.getData('powerKey');
+
+      // animación de ruptura
       this.tweens.add({
         targets: egg,
         y: egg.y - 40,
-        angle:  50,      // por ejemplo rotamos
+        angle: 50,
         duration: 200,
         onComplete: () => {
           egg.destroy();
-          this.spawnPowerUp(x+25, y-5, key);
+          this.spawnPowerUp(x + 25, y - 5, key);
         }
       });
     }
   }
 
+  collectFruit(player, fruit) {
+    const pts = fruit.getData('points');
+    this.addPoints(pts, fruit.x, fruit.y);
+    fruit.destroy();
+  }
+
+
+  
   spawnPowerUp(x, y, key) {
     const item = this.physics.add.sprite(x, y, key)
       .setBounce(0.2)

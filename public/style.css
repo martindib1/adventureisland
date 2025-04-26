@@ -14,10 +14,11 @@ body {
     align-items: center;
 }
 
-/* === Añadido: fuente Pixel Art === */
 @font-face {
-  font-family: 'Pixel';
-  src: url('/assets/Pixel.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+  font-family: 'pixelart';
+  src: url('assets/fonts/Silkscreen.ttf') format('truetype');
 }
+
+body {
+  font-family: 'pixelart', sans-serif;
+} 

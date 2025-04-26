@@ -29,7 +29,7 @@ export class MainMenu extends Scene {
 
         // Iniciar juego con tecla o clic
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Game2');
+            this.scene.start('Game3');
         });
 
         this.input.once('pointerdown', () => {

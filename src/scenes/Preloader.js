@@ -6,6 +6,7 @@ export class Preloader extends Scene {
   preload() {
     this.load.setPath('assets');
     this.load.image('mapita','mapa.png');
+    this.load.image('vidagrande','vidagrande.png');
     this.load.image('main','princ.png');
     this.load.image('plataforma','prosa.png');
     this.load.image('pvio','pvio.png');
@@ -21,7 +22,7 @@ export class Preloader extends Scene {
     this.load.image('powerAttack', 'hacha.png');
     this.load.image('powerFire',   'fuego2.png');
     this.load.image('bolaAtaque','hacha.png');
-    this.load.image('bolaFuego','fuego2.png');
+    this.load.image('bolaFuego','fuego4.png');
     this.load.spritesheet('snail','caracolanim.png',{frameWidth:24,frameHeight:24});
     this.load.spritesheet('crow','crow.png',{frameWidth:16,frameHeight:15});
     this.load.image('cobraFireball','cobrafireball.png');
@@ -48,6 +49,21 @@ export class Preloader extends Scene {
     this.load.image('score50', '50pts.png');
     this.load.image('score100','100pts.png');
     this.load.image('vida','vidachico.png');
+    this.load.image('jarron',  'jarron.png');
+    this.load.image('score1000', '1000pts.png');
+    this.load.spritesheet('axea', 'axespin.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('firea', 'fireflicker.png', { frameWidth: 16, frameHeight: 16 });
+
+    //solo para juego2
+
+    this.load.image('mapa2','mapasinnada.png');
+    this.load.image('plat21','plat2.png');
+    this.load.image('cuadrao','cuadrado.png');
+    this.load.image('plat22','plat22.png');
+    this.load.image('plat23','plat23.png');
+    this.load.image('plat24','platlvl2.png');
+    this.load.image('plat25','platboss.png');
+    this.load.spritesheet('araña', 'araña.png', { frameWidth: 16, frameHeight: 16 });
   }
   create() {
 
@@ -111,6 +127,16 @@ export class Preloader extends Scene {
       key: 'playerDeathAnim',
       frames: this.anims.generateFrameNumbers('playerDeath',{ start:0, end:3 }),
       frameRate: 6, repeat: -1
+    });
+    this.anims.create({
+      key: 'axeSpin',
+      frames: this.anims.generateFrameNumbers('axea',{ start:0, end:3 }),
+      frameRate: 10, repeat: -1
+    });
+    this.anims.create({
+      key: 'arañaIdle',
+      frames: this.anims.generateFrameNumbers('araña',{ start:0, end:1 }),
+      frameRate: 10, repeat: -1
     });
 
      this.scene.start('MainMenu'); 
