@@ -11,6 +11,21 @@ export class Game extends Scene {
   }
 
   create() {
+    // 1) Música de fondo
+    this.bgMusic = this.sound.add('bg_music1', { volume: 0.5, loop: true });
+    this.bgMusic.play();
+    this.events.on('shutdown', () => {
+      this.bgMusic.stop();
+    });
+  
+
+    // 2) Efectos de sonido
+    this.sfx = {
+      jump:    this.sound.add('sfx_jump'),
+      shoot:   this.sound.add('sfx_shoot'),
+      enemy:   this.sound.add('sfx_enemy'),
+      collect: this.sound.add('sfx_collect'),
+    };
     // — 1) Fondo —
     const bg = this.add.image(0, 0, 'mapita').setOrigin(0, 0);
     this.mapWidth = bg.width;          // ancho del mapa para el auto‐walk
@@ -32,6 +47,7 @@ export class Game extends Scene {
     // — 2) Plataformas fijas —
     this.platforms  = this.physics.add.staticGroup();
     this.platforms.create(2430, 414, 'plataforma');
+    this.platforms.create(  0, 300, 'principio');
     this.platforms2 = this.physics.add.staticGroup();
     this.platforms2.create(6225, 317, 'psal');
     this.platforms3 = this.physics.add.staticGroup();
@@ -58,7 +74,7 @@ export class Game extends Scene {
     }
 
     // — 5) Jugador —
-    this.player = this.physics.add.sprite(100, 350, 'player')
+    this.player = this.physics.add.sprite(100, 370, 'player')
       .setBounce(0.1);
     this.playerSpeed   = 150;
     this.hasSpeedBoost = false;
@@ -368,6 +384,7 @@ export class Game extends Scene {
         this.player.play('jump', true);
       }
       if (this.cursors.up.isDown && this.player.body.blocked.down) {
+        this.sfx.jump.play();
         this.player.setVelocityY(-250);
       }
     }
@@ -417,6 +434,7 @@ export class Game extends Scene {
 
   shoot() {
     if (!this.currentWeapon) return;
+    this.sfx.shoot.play();
     const dir = this.player.flipX ? -1 : 1;
     const sx  = this.player.x + dir * 20;
     const sy  = this.player.y - 10;
@@ -506,6 +524,7 @@ export class Game extends Scene {
     proj.destroy();
     if (!enemy || !enemy.active) return;
     if (enemy.getData('type') === 'kello') {
+      this.sfx.enemy.play();
       let hp = enemy.getData('health') - 1;
       enemy.setData('health', hp);
       if (hp === 1) {
@@ -530,6 +549,7 @@ export class Game extends Scene {
   }
 
   collectFruit(player, fruit) {
+    this.sfx.collect.play();
     const pts = fruit.getData('points');
     this.addPoints(pts, fruit.x, fruit.y);
     fruit.destroy();

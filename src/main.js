@@ -4,7 +4,7 @@ import { GameOver } from './scenes/GameOver';
 import { MainMenu } from './scenes/MainMenu';
 import { Preloader } from './scenes/Preloader';
 import { Game2 } from './scenes/Game2';
-import { Game3 } from './scenes/Game3';
+import { VictoryScene } from './scenes/VictoryScene';
 
 const config = {
     type: Phaser.AUTO,
@@ -30,7 +30,7 @@ const config = {
         Game,
         GameOver,
         Game2,
-        Game3,
+        VictoryScene,
     ]
 };
 

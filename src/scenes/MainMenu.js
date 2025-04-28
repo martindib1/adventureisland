@@ -6,6 +6,14 @@ export class MainMenu extends Scene {
     }
 
     create() {
+
+        // 1) Música de fondo
+        this.bgMusic = this.sound.add('menu_music', { volume: 0.5, loop: true });
+        this.bgMusic.play();
+        this.events.on('shutdown', () => {
+            this.bgMusic.stop();
+          });
+        
         // Fondo del menú principal en el centro
         const bg = this.add.image(0, 0, 'main').setOrigin(0, 0);
 
@@ -29,11 +37,11 @@ export class MainMenu extends Scene {
 
         // Iniciar juego con tecla o clic
         this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Game3');
+            this.scene.start('Game');
         });
 
         this.input.once('pointerdown', () => {
-            this.scene.start('Game');
+            this.scene.start('Game2');
         });
     }
 }

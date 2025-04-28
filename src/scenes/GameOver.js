@@ -9,19 +9,26 @@ export class GameOver extends Scene
 
     create ()
     {
-        this.cameras.main.setBackgroundColor(0xff0000);
+        //color del fondo negro
+    this.cameras.main.setBackgroundColor('#000000');
 
-
-        this.add.text(512, 384, 'Game Over', {
-            fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
+    this.add
+      .text(this.cameras.main.centerX, 100, `GAME OVER`, {
+        fontFamily: 'pixelart', fontSize: '48px', color: '#ffffff'
+      })
+      .setOrigin(0.5).setScale(0.5);
+    this.add
+      .text(this.cameras.main.centerX, 160, `Press ANY KEY to restart`, {
+        fontFamily: 'pixelart', fontSize: '32px', color: '#ffffff'
+      })
+      .setOrigin(0.5).setScale(0.5);
 
         this.input.once('pointerdown', () => {
-
             this.scene.start('MainMenu');
 
+        });
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.start('MainMenu');
         });
     }
 }
