@@ -360,7 +360,7 @@ export class Game extends Scene {
 
       // cuando salga del mapa, vamos a Game3
       if (this.player.x > this.mapWidth + this.player.width) {
-        this.scene.start('Game3', { lives: this.lives, score: this.score });
+        this.scene.start('Game2', { lives: this.lives, score: this.score });
       }
       return;
     }
